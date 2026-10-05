@@ -1,3 +1,4 @@
+ollama
 streamlit>=1.30.0
 openai
 pandas>=2.2,<3
