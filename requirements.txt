@@ -11,4 +11,3 @@ langchain-community>=0.3,<1
 opencv-python>=4.10,<5
 pillow>=10,<13
 matplotlib>=3.9,<4
-Other: API key (Gemini) or local Ollama required for the LLM part."
