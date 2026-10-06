@@ -1,315 +1,469 @@
 import streamlit as st
-from google import genai
-from dotenv import load_dotenv
-import os
+import ollama
+from datetime import datetime
 
-# ---------------------------------------------------------
-# LOAD API KEY
-# ---------------------------------------------------------
-load_dotenv()
-
-API_KEY = os.getenv("GEMINI_API_KEY")
-
-# ---------------------------------------------------------
+# --------------------------------------------------
 # PAGE CONFIGURATION
-# ---------------------------------------------------------
+# --------------------------------------------------
+
 st.set_page_config(
     page_title="AI Social Media Content Creator",
-    page_icon="✨",
+    page_icon="📱",
     layout="wide"
 )
 
-# ---------------------------------------------------------
+# --------------------------------------------------
 # CUSTOM CSS
-# ---------------------------------------------------------
+# --------------------------------------------------
+
 st.markdown("""
 <style>
 
-    /* Main background */
-    .stApp {
-        background: linear-gradient(135deg, #f5f7ff, #eef2ff);
-    }
+.main {
+    background-color: #f7f8fc;
+}
 
-    /* Main title */
-    .main-title {
-        text-align: center;
-        font-size: 42px;
-        font-weight: 800;
-        color: #4f46e5;
-        margin-bottom: 5px;
-    }
+.title {
+    text-align: center;
+    font-size: 42px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
 
-    /* Subtitle */
-    .subtitle {
-        text-align: center;
-        font-size: 18px;
-        color: #555555;
-        margin-bottom: 30px;
-    }
+.subtitle {
+    text-align: center;
+    font-size: 18px;
+    color: gray;
+    margin-bottom: 30px;
+}
 
-    /* Section headings */
-    .section-title {
-        color: #3730a3;
-        font-size: 22px;
-        font-weight: 700;
-        margin-top: 15px;
-    }
-
-    /* Info card */
-    .info-card {
-        background-color: white;
-        padding: 22px;
-        border-radius: 15px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.06);
-        margin-bottom: 20px;
-    }
-
-    /* Output card */
-    .output-card {
-        background-color: white;
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 6px solid #4f46e5;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
-    }
-
-    /* Button */
-    .stButton > button {
-        width: 100%;
-        border-radius: 10px;
-        height: 48px;
-        font-size: 17px;
-        font-weight: 700;
-        background-color: #4f46e5;
-        color: white;
-        border: none;
-    }
-
-    .stButton > button:hover {
-        background-color: #3730a3;
-        color: white;
-    }
+.card {
+    padding: 20px;
+    border-radius: 15px;
+    background-color: white;
+    box-shadow: 0px 3px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
 
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------
+# --------------------------------------------------
+# SESSION STATE
+# --------------------------------------------------
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+if "generated_content" not in st.session_state:
+    st.session_state.generated_content = ""
+
+# --------------------------------------------------
 # HEADER
-# ---------------------------------------------------------
+# --------------------------------------------------
+
 st.markdown(
-    '<div class="main-title">✨ AI Social Media Content Creator</div>',
+    '<div class="title">📱 AI Social Media Content Creator</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="subtitle">Create engaging social media content quickly using Artificial Intelligence</div>',
+    '<div class="subtitle">Create captions, posts, reels, hashtags and ideas using AI 🤖</div>',
     unsafe_allow_html=True
 )
 
-# ---------------------------------------------------------
-# CHECK API KEY
-# ---------------------------------------------------------
-if not API_KEY:
-    st.error("⚠️ Gemini API key not found.")
+st.divider()
 
-    st.info(
-        "Please add your API key in the .env file as:\n\n"
-        "GEMINI_API_KEY=your_api_key_here"
-    )
+# --------------------------------------------------
+# SIDEBAR
+# --------------------------------------------------
 
-    st.stop()
+st.sidebar.title("⚙️ Content Settings")
 
-# ---------------------------------------------------------
-# GEMINI CLIENT
-# ---------------------------------------------------------
-client = genai.Client(api_key=API_KEY)
-
-# ---------------------------------------------------------
-# INPUT SECTION
-# ---------------------------------------------------------
-st.markdown(
-    '<div class="section-title">📝 Create Your Content</div>',
-    unsafe_allow_html=True
+platform = st.sidebar.selectbox(
+    "📱 Platform",
+    [
+        "Instagram",
+        "LinkedIn",
+        "Facebook",
+        "Twitter/X"
+    ]
 )
 
-st.markdown('<div class="info-card">', unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
-
-with col1:
-
-    platform = st.selectbox(
-        "📱 Select Platform",
-        [
-            "Instagram",
-            "Facebook",
-            "LinkedIn",
-            "Twitter / X",
-            "YouTube"
-        ]
-    )
-
-    content_type = st.selectbox(
-        "📌 Content Type",
-        [
-            "Post Caption",
-            "Short Post",
-            "Advertisement",
-            "Product Promotion",
-            "Educational Content",
-            "Motivational Content",
-            "Reel / Video Caption"
-        ]
-    )
-
-with col2:
-
-    tone = st.selectbox(
-        "🎨 Select Tone",
-        [
-            "Professional",
-            "Friendly",
-            "Creative",
-            "Funny",
-            "Inspirational",
-            "Educational",
-            "Trendy"
-        ]
-    )
-
-    language = st.selectbox(
-        "🌐 Language",
-        [
-            "English",
-            "Telugu",
-            "Hindi"
-        ]
-    )
-
-topic = st.text_area(
-    "💡 Enter your topic or idea",
-    placeholder="Example: Create an Instagram post about the importance of learning Python...",
-    height=120
+content_type = st.sidebar.selectbox(
+    "✍️ Content Type",
+    [
+        "Caption",
+        "Social Media Post",
+        "Reel Script",
+        "Hashtags",
+        "Post Ideas",
+        "Bio"
+    ]
 )
 
-additional_details = st.text_input(
-    "✨ Additional details (optional)",
-    placeholder="Example: Include emojis, call-to-action, and hashtags"
+tone = st.sidebar.selectbox(
+    "🎨 Tone",
+    [
+        "Professional",
+        "Friendly",
+        "Funny",
+        "Creative",
+        "Motivational",
+        "Inspirational"
+    ]
 )
 
-st.markdown('</div>', unsafe_allow_html=True)
+language = st.sidebar.selectbox(
+    "🌐 Language",
+    [
+        "English",
+        "Telugu",
+        "Hindi"
+    ]
+)
 
-# ---------------------------------------------------------
-# GENERATE BUTTON
-# ---------------------------------------------------------
-generate = st.button("🚀 Generate Content")
+audience = st.sidebar.selectbox(
+    "🎯 Target Audience",
+    [
+        "Students",
+        "Professionals",
+        "Business Owners",
+        "Content Creators",
+        "General Audience",
+        "Job Seekers"
+    ]
+)
 
-# ---------------------------------------------------------
-# AI GENERATION
-# ---------------------------------------------------------
-if generate:
+length = st.sidebar.selectbox(
+    "📏 Content Length",
+    [
+        "Short",
+        "Medium",
+        "Long"
+    ]
+)
 
-    if not topic.strip():
-        st.warning("⚠️ Please enter a topic or idea first.")
+st.sidebar.divider()
 
-    else:
+st.sidebar.info(
+    "💡 Powered by Ollama + Llama 3.2"
+)
 
-        prompt = f"""
-You are a professional social media content creator.
+# --------------------------------------------------
+# MAIN INPUT
+# --------------------------------------------------
 
-Create high-quality social media content using the following details:
+st.subheader("📝 Create Your Content")
 
+topic = st.text_input(
+    "Enter your topic",
+    placeholder="Example: College Fest, New Product, Travel, Education"
+)
+
+keywords = st.text_input(
+    "Optional keywords",
+    placeholder="Example: technology, students, innovation"
+)
+
+# --------------------------------------------------
+# GENERATE FUNCTION
+# --------------------------------------------------
+
+def generate_content():
+
+    prompt = f"""
+You are an expert AI Social Media Content Creator.
+
+Create content using the following information:
+
+Topic: {topic}
 Platform: {platform}
 Content Type: {content_type}
 Tone: {tone}
 Language: {language}
-Topic: {topic}
+Target Audience: {audience}
+Content Length: {length}
+Keywords: {keywords}
 
-Additional Requirements:
-{additional_details}
+Follow these instructions:
 
-Instructions:
+1. Create high-quality and engaging content.
+2. Make the content suitable for the selected platform.
+3. Use the selected language.
+4. Use emojis where appropriate.
+5. Avoid unnecessary explanations.
+6. Make the opening sentence attractive.
+7. Include a call-to-action when appropriate.
 
-1. Create an attractive and engaging title if appropriate.
-2. Write clear and easy-to-understand content.
-3. Match the selected social media platform.
-4. Match the requested tone.
-5. Use suitable emojis where appropriate.
-6. Include a strong Call-To-Action when suitable.
-7. Add 5-10 relevant hashtags.
-8. Avoid unnecessary repetition.
-9. Make the content ready to copy and publish.
-10. Keep the content professional and engaging.
+Content type instructions:
 
-Return only the final social media content.
+If the content type is Caption:
+Create an attractive social media caption.
+
+If the content type is Social Media Post:
+Create a complete social media post with:
+- Hook
+- Main content
+- Call-to-action
+
+If the content type is Reel Script:
+Create a short video script containing:
+- Hook
+- Scene/Action
+- Dialogue or Voice-over
+- Ending
+- Call-to-action
+
+If the content type is Hashtags:
+Generate 15 relevant hashtags.
+
+If the content type is Post Ideas:
+Generate 10 creative post ideas.
+
+If the content type is Bio:
+Create a short and attractive social media bio.
+"""
+
+    try:
+
+        response = ollama.chat(
+            model="llama3.2",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+
+        return response["message"]["content"]
+
+    except Exception as e:
+
+        return f"ERROR: {str(e)}"
+
+
+# --------------------------------------------------
+# GENERATE BUTTON
+# --------------------------------------------------
+
+if st.button(
+    "✨ Generate AI Content",
+    use_container_width=True
+):
+
+    if topic.strip() == "":
+        st.warning("⚠️ Please enter a topic.")
+
+    else:
+
+        with st.spinner("🤖 AI is creating your content..."):
+
+            result = generate_content()
+
+            st.session_state.generated_content = result
+
+            # Save history
+            st.session_state.history.append(
+                {
+                    "time": datetime.now().strftime(
+                        "%d-%m-%Y %H:%M"
+                    ),
+                    "topic": topic,
+                    "platform": platform,
+                    "type": content_type,
+                    "content": result
+                }
+            )
+
+# --------------------------------------------------
+# DISPLAY GENERATED CONTENT
+# --------------------------------------------------
+
+if st.session_state.generated_content:
+
+    st.divider()
+
+    st.subheader("🎯 AI Generated Content")
+
+    st.text_area(
+        "Generated Content",
+        st.session_state.generated_content,
+        height=350
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.download_button(
+            "📥 Download",
+            data=st.session_state.generated_content,
+            file_name="social_media_content.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+
+    with col2:
+
+        if st.button(
+            "🔄 Generate Again",
+            use_container_width=True
+        ):
+
+            with st.spinner("Generating new content..."):
+
+                result = generate_content()
+
+                st.session_state.generated_content = result
+
+                st.rerun()
+
+    with col3:
+
+        if st.button(
+            "🗑️ Clear",
+            use_container_width=True
+        ):
+
+            st.session_state.generated_content = ""
+
+            st.rerun()
+
+# --------------------------------------------------
+# CONTENT ANALYZER
+# --------------------------------------------------
+
+st.divider()
+
+st.subheader("📊 AI Content Analyzer")
+
+if st.session_state.generated_content:
+
+    if st.button(
+        "🔍 Analyze Content",
+        use_container_width=True
+    ):
+
+        analysis_prompt = f"""
+Analyze the following social media content.
+
+Content:
+{st.session_state.generated_content}
+
+Give scores from 1 to 100 for:
+
+1. Engagement
+2. Creativity
+3. Readability
+4. Audience Appeal
+5. Platform Suitability
+
+Then calculate an Overall Score.
+
+Finally provide 3 suggestions for improvement.
+
+Use this format:
+
+Engagement: XX/100
+Creativity: XX/100
+Readability: XX/100
+Audience Appeal: XX/100
+Platform Suitability: XX/100
+Overall Score: XX/100
+
+Suggestions:
+1.
+2.
+3.
 """
 
         try:
 
-            with st.spinner("✨ Creating your content..."):
+            with st.spinner("🔍 Analyzing content..."):
 
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt
+                analysis = ollama.chat(
+                    model="llama3.2",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": analysis_prompt
+                        }
+                    ]
                 )
 
-            generated_content = response.text
+                analysis_result = analysis[
+                    "message"
+                ]["content"]
 
-            # -------------------------------------------------
-            # OUTPUT
-            # -------------------------------------------------
-            st.markdown(
-                '<div class="section-title">✨ Generated Content</div>',
-                unsafe_allow_html=True
+                st.text_area(
+                    "📈 Analysis Result",
+                    analysis_result,
+                    height=300
+                )
+
+        except Exception as e:
+
+            st.error(
+                "Unable to analyze content."
             )
 
-            st.markdown('<div class="output-card">', unsafe_allow_html=True)
+            st.write(e)
 
-            st.markdown(generated_content)
+else:
 
-            st.markdown('</div>', unsafe_allow_html=True)
+    st.info(
+        "Generate some content first to use the Content Analyzer."
+    )
 
-            # -------------------------------------------------
-            # COPYABLE OUTPUT
-            # -------------------------------------------------
-            st.markdown("### 📋 Copy Your Content")
+# --------------------------------------------------
+# CONTENT HISTORY
+# --------------------------------------------------
 
-            st.code(
-                generated_content,
-                language="text"
+st.divider()
+
+st.subheader("📚 Content History")
+
+if len(st.session_state.history) == 0:
+
+    st.info(
+        "No content generated yet."
+    )
+
+else:
+
+    for index, item in enumerate(
+        reversed(st.session_state.history)
+    ):
+
+        with st.expander(
+            f"📌 {item['topic']} | "
+            f"{item['platform']} | "
+            f"{item['time']}"
+        ):
+
+            st.write(
+                "**Content Type:**",
+                item["type"]
             )
 
-            # -------------------------------------------------
-            # SUCCESS MESSAGE
-            # -------------------------------------------------
-            try:
+            st.write(
+                item["content"]
+            )
 
-    with st.spinner("✨ Creating your content..."):
-
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-
-    generated_content = response.text
-
-    st.markdown("### ✨ Generated Content")
-    st.write(generated_content)
-
-except Exception as e:
-    st.exception(e)
-# ---------------------------------------------------------
+# --------------------------------------------------
 # FOOTER
-# ---------------------------------------------------------
-st.markdown("---")
+# --------------------------------------------------
+
+st.divider()
 
 st.markdown(
     """
-    <div style="text-align:center; color:#666;">
-        ✨ AI Social Media Content Creator |
-        Powered by Gemini AI
-    </div>
+    <center>
+    <b>📱 AI Social Media Content Creator</b><br>
+    Built with Python, Streamlit and Ollama 🤖
+    </center>
     """,
     unsafe_allow_html=True
 )
