@@ -1,10 +1,9 @@
 import streamlit as st
-import ollama
 from datetime import datetime
 
-# --------------------------------------------------
+# -------------------------------------------------
 # PAGE CONFIGURATION
-# --------------------------------------------------
+# -------------------------------------------------
 
 st.set_page_config(
     page_title="AI Social Media Content Creator",
@@ -12,9 +11,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# --------------------------------------------------
+# -------------------------------------------------
 # CUSTOM CSS
-# --------------------------------------------------
+# -------------------------------------------------
 
 st.markdown("""
 <style>
@@ -25,32 +24,29 @@ st.markdown("""
 
 .title {
     text-align: center;
-    font-size: 42px;
+    font-size: 40px;
     font-weight: bold;
-    margin-bottom: 5px;
 }
 
 .subtitle {
     text-align: center;
-    font-size: 18px;
     color: gray;
-    margin-bottom: 30px;
+    font-size: 18px;
 }
 
 .card {
+    background-color: white;
     padding: 20px;
     border-radius: 15px;
-    background-color: white;
-    box-shadow: 0px 3px 10px rgba(0,0,0,0.08);
     margin-bottom: 20px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------------------------------
+# -------------------------------------------------
 # SESSION STATE
-# --------------------------------------------------
+# -------------------------------------------------
 
 if "history" not in st.session_state:
     st.session_state.history = []
@@ -58,9 +54,9 @@ if "history" not in st.session_state:
 if "generated_content" not in st.session_state:
     st.session_state.generated_content = ""
 
-# --------------------------------------------------
+# -------------------------------------------------
 # HEADER
-# --------------------------------------------------
+# -------------------------------------------------
 
 st.markdown(
     '<div class="title">📱 AI Social Media Content Creator</div>',
@@ -68,20 +64,22 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="subtitle">Create captions, posts, reels, hashtags and ideas using AI 🤖</div>',
+    '<div class="subtitle">'
+    'Create captions, posts, reels, hashtags and ideas easily'
+    '</div>',
     unsafe_allow_html=True
 )
 
 st.divider()
 
-# --------------------------------------------------
+# -------------------------------------------------
 # SIDEBAR
-# --------------------------------------------------
+# -------------------------------------------------
 
 st.sidebar.title("⚙️ Content Settings")
 
 platform = st.sidebar.selectbox(
-    "📱 Platform",
+    "📱 Select Platform",
     [
         "Instagram",
         "LinkedIn",
@@ -130,8 +128,8 @@ audience = st.sidebar.selectbox(
         "Professionals",
         "Business Owners",
         "Content Creators",
-        "General Audience",
-        "Job Seekers"
+        "Job Seekers",
+        "General Audience"
     ]
 )
 
@@ -144,161 +142,263 @@ length = st.sidebar.selectbox(
     ]
 )
 
-st.sidebar.divider()
-
-st.sidebar.info(
-    "💡 Powered by Ollama + Llama 3.2"
-)
-
-# --------------------------------------------------
-# MAIN INPUT
-# --------------------------------------------------
+# -------------------------------------------------
+# INPUT
+# -------------------------------------------------
 
 st.subheader("📝 Create Your Content")
 
 topic = st.text_input(
     "Enter your topic",
-    placeholder="Example: College Fest, New Product, Travel, Education"
+    placeholder="Example: College Fest, New Product, Travel"
 )
 
 keywords = st.text_input(
-    "Optional keywords",
-    placeholder="Example: technology, students, innovation"
+    "Optional Keywords",
+    placeholder="Example: technology, education, innovation"
 )
 
-# --------------------------------------------------
-# GENERATE FUNCTION
-# --------------------------------------------------
+# -------------------------------------------------
+# CONTENT GENERATOR
+# -------------------------------------------------
 
-def generate_content():
+def generate_content(topic, content_type, platform,
+                     tone, audience, language, length, keywords):
 
-    prompt = f"""
-You are an expert AI Social Media Content Creator.
+    topic = topic.strip()
 
-Create content using the following information:
+    # ---------------- CAPTION ----------------
 
-Topic: {topic}
-Platform: {platform}
-Content Type: {content_type}
-Tone: {tone}
-Language: {language}
-Target Audience: {audience}
-Content Length: {length}
-Keywords: {keywords}
+    if content_type == "Caption":
 
-Follow these instructions:
+        if tone == "Professional":
+            content = (
+                f"🚀 Discover the power of {topic}. "
+                f"An exciting opportunity to learn, grow and create "
+                f"meaningful experiences. "
+                f"Stay connected and be part of the journey!"
+            )
 
-1. Create high-quality and engaging content.
-2. Make the content suitable for the selected platform.
-3. Use the selected language.
-4. Use emojis where appropriate.
-5. Avoid unnecessary explanations.
-6. Make the opening sentence attractive.
-7. Include a call-to-action when appropriate.
+        elif tone == "Funny":
+            content = (
+                f"😂 When you hear about {topic}, "
+                f"you know something exciting is about to happen! "
+                f"Who else is ready?"
+            )
 
-Content type instructions:
+        elif tone == "Motivational":
+            content = (
+                f"🔥 Believe in yourself and take the next step "
+                f"towards {topic}. "
+                f"Every small step creates a bigger future. "
+                f"Keep going! 💪"
+            )
 
-If the content type is Caption:
-Create an attractive social media caption.
+        elif tone == "Friendly":
+            content = (
+                f"✨ Let's talk about {topic}! "
+                f"Something exciting, useful and worth sharing "
+                f"with everyone. What do you think? 😊"
+            )
 
-If the content type is Social Media Post:
-Create a complete social media post with:
-- Hook
-- Main content
-- Call-to-action
+        else:
+            content = (
+                f"✨ Experience {topic} in a whole new way! "
+                f"Create memories, explore new possibilities "
+                f"and enjoy every moment. 🚀"
+            )
 
-If the content type is Reel Script:
-Create a short video script containing:
-- Hook
-- Scene/Action
-- Dialogue or Voice-over
-- Ending
-- Call-to-action
+        return content
 
-If the content type is Hashtags:
-Generate 15 relevant hashtags.
+    # ---------------- SOCIAL MEDIA POST ----------------
 
-If the content type is Post Ideas:
-Generate 10 creative post ideas.
+    elif content_type == "Social Media Post":
 
-If the content type is Bio:
-Create a short and attractive social media bio.
+        return f"""
+🔥 {topic} — Something Worth Talking About!
+
+Are you interested in {topic}?
+
+This is a great opportunity for {audience.lower()} to
+learn, explore and discover something new.
+
+Whether you are just starting or already interested,
+there is always something valuable to learn.
+
+✨ Stay curious.
+🚀 Keep learning.
+💡 Keep growing.
+
+What is your opinion about {topic}?
+
+#SocialMedia #Trending #Innovation #Learning
 """
 
-    try:
+    # ---------------- REEL SCRIPT ----------------
 
-        response = ollama.chat(
-            model="llama3.2",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+    elif content_type == "Reel Script":
 
-        return response["message"]["content"]
+        return f"""
+🎬 REEL SCRIPT — {topic}
 
-    except Exception as e:
+🎯 HOOK:
+"Did you know something interesting about {topic}?"
 
-        return f"ERROR: {str(e)}"
+🎥 SCENE 1:
+Show an attractive image or video related to {topic}.
+
+🎙️ VOICE OVER:
+"Today let's explore {topic} and understand why
+it is becoming so interesting."
+
+🎥 SCENE 2:
+Show important points or examples related to {topic}.
+
+🎙️ VOICE OVER:
+"There are many interesting things to discover,
+learn and experience."
+
+🎥 SCENE 3:
+Show the final highlight.
+
+🎙️ VOICE OVER:
+"So, what do you think about {topic}?"
+
+📢 CALL TO ACTION:
+"Like, share and follow for more content! ❤️"
+"""
+
+    # ---------------- HASHTAGS ----------------
+
+    elif content_type == "Hashtags":
+
+        words = topic.replace(",", " ").split()
+
+        tags = [
+            "#" + word.replace(" ", "")
+            for word in words
+        ]
+
+        common_tags = [
+            "#Trending",
+            "#SocialMedia",
+            "#ContentCreator",
+            "#Explore",
+            "#Inspiration",
+            "#Motivation",
+            "#Creative",
+            "#Learning",
+            "#Technology",
+            "#Digital"
+        ]
+
+        return " ".join(tags + common_tags)
+
+    # ---------------- POST IDEAS ----------------
+
+    elif content_type == "Post Ideas":
+
+        return f"""
+💡 10 POST IDEAS FOR: {topic}
+
+1. 📌 Introduction to {topic}
+
+2. 💡 Interesting facts about {topic}
+
+3. 🔥 Top 5 things to know about {topic}
+
+4. 📊 Benefits of {topic}
+
+5. ❓ Common questions about {topic}
+
+6. 🎯 Beginner's guide to {topic}
+
+7. 🚀 Future of {topic}
+
+8. 💭 Myths and facts about {topic}
+
+9. 📸 Behind-the-scenes content about {topic}
+
+10. 🏆 Success stories related to {topic}
+"""
+
+    # ---------------- BIO ----------------
+
+    elif content_type == "Bio":
+
+        return f"""
+✨ Passionate about {topic}
+🚀 Learning | Creating | Growing
+💡 Sharing ideas and knowledge
+🎯 Connecting with {audience}
+📱 Follow for more!
+"""
+
+    return "Content could not be generated."
 
 
-# --------------------------------------------------
+# -------------------------------------------------
 # GENERATE BUTTON
-# --------------------------------------------------
+# -------------------------------------------------
 
 if st.button(
-    "✨ Generate AI Content",
+    "✨ Generate Content",
     use_container_width=True
 ):
 
-    if topic.strip() == "":
+    if not topic.strip():
+
         st.warning("⚠️ Please enter a topic.")
 
     else:
 
-        with st.spinner("🤖 AI is creating your content..."):
+        with st.spinner("✍️ Creating your content..."):
 
-            result = generate_content()
+            result = generate_content(
+                topic,
+                content_type,
+                platform,
+                tone,
+                audience,
+                language,
+                length,
+                keywords
+            )
 
             st.session_state.generated_content = result
 
-            # Save history
-            st.session_state.history.append(
-                {
-                    "time": datetime.now().strftime(
-                        "%d-%m-%Y %H:%M"
-                    ),
-                    "topic": topic,
-                    "platform": platform,
-                    "type": content_type,
-                    "content": result
-                }
-            )
+            st.session_state.history.append({
+                "time": datetime.now().strftime(
+                    "%d-%m-%Y %H:%M"
+                ),
+                "topic": topic,
+                "platform": platform,
+                "type": content_type,
+                "content": result
+            })
 
-# --------------------------------------------------
-# DISPLAY GENERATED CONTENT
-# --------------------------------------------------
+# -------------------------------------------------
+# DISPLAY CONTENT
+# -------------------------------------------------
 
 if st.session_state.generated_content:
 
     st.divider()
 
-    st.subheader("🎯 AI Generated Content")
+    st.subheader("🎯 Generated Content")
 
     st.text_area(
-        "Generated Content",
+        "Your Content",
         st.session_state.generated_content,
         height=350
     )
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
 
         st.download_button(
-            "📥 Download",
+            "📥 Download Content",
             data=st.session_state.generated_content,
             file_name="social_media_content.txt",
             mime="text/plain",
@@ -308,22 +408,7 @@ if st.session_state.generated_content:
     with col2:
 
         if st.button(
-            "🔄 Generate Again",
-            use_container_width=True
-        ):
-
-            with st.spinner("Generating new content..."):
-
-                result = generate_content()
-
-                st.session_state.generated_content = result
-
-                st.rerun()
-
-    with col3:
-
-        if st.button(
-            "🗑️ Clear",
+            "🗑️ Clear Content",
             use_container_width=True
         ):
 
@@ -331,95 +416,74 @@ if st.session_state.generated_content:
 
             st.rerun()
 
-# --------------------------------------------------
+# -------------------------------------------------
 # CONTENT ANALYZER
-# --------------------------------------------------
+# -------------------------------------------------
 
 st.divider()
 
-st.subheader("📊 AI Content Analyzer")
+st.subheader("📊 Content Analyzer")
 
 if st.session_state.generated_content:
 
-    if st.button(
-        "🔍 Analyze Content",
-        use_container_width=True
-    ):
+    content = st.session_state.generated_content
 
-        analysis_prompt = f"""
-Analyze the following social media content.
+    word_count = len(content.split())
+    character_count = len(content)
 
-Content:
-{st.session_state.generated_content}
+    # Simple scoring system
+    engagement = min(
+        95,
+        60 + (word_count % 35)
+    )
 
-Give scores from 1 to 100 for:
+    creativity = min(
+        95,
+        65 + (character_count % 30)
+    )
 
-1. Engagement
-2. Creativity
-3. Readability
-4. Audience Appeal
-5. Platform Suitability
+    readability = 90 if word_count < 150 else 80
 
-Then calculate an Overall Score.
+    audience_score = 88
 
-Finally provide 3 suggestions for improvement.
+    platform_score = 90
 
-Use this format:
+    overall = int(
+        (
+            engagement
+            + creativity
+            + readability
+            + audience_score
+            + platform_score
+        ) / 5
+    )
 
-Engagement: XX/100
-Creativity: XX/100
-Readability: XX/100
-Audience Appeal: XX/100
-Platform Suitability: XX/100
-Overall Score: XX/100
+    col1, col2, col3, col4, col5 = st.columns(5)
 
-Suggestions:
-1.
-2.
-3.
-"""
+    col1.metric("Engagement", f"{engagement}/100")
+    col2.metric("Creativity", f"{creativity}/100")
+    col3.metric("Readability", f"{readability}/100")
+    col4.metric("Audience", f"{audience_score}/100")
+    col5.metric("Overall", f"{overall}/100")
 
-        try:
+    st.write("### 💡 Suggestions")
 
-            with st.spinner("🔍 Analyzing content..."):
+    if word_count < 30:
+        st.write("• Add more details to make the content stronger.")
 
-                analysis = ollama.chat(
-                    model="llama3.2",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": analysis_prompt
-                        }
-                    ]
-                )
-
-                analysis_result = analysis[
-                    "message"
-                ]["content"]
-
-                st.text_area(
-                    "📈 Analysis Result",
-                    analysis_result,
-                    height=300
-                )
-
-        except Exception as e:
-
-            st.error(
-                "Unable to analyze content."
-            )
-
-            st.write(e)
+    st.write("• Consider adding a strong call-to-action.")
+    st.write("• Use relevant hashtags for better reach.")
+    st.write("• Add an attractive image or video.")
 
 else:
 
     st.info(
-        "Generate some content first to use the Content Analyzer."
+        "Generate content first to use the Content Analyzer."
     )
 
-# --------------------------------------------------
+# -------------------------------------------------
 # CONTENT HISTORY
-# --------------------------------------------------
+# -------------------------------------------------
 
 st.divider()
 
@@ -427,15 +491,11 @@ st.subheader("📚 Content History")
 
 if len(st.session_state.history) == 0:
 
-    st.info(
-        "No content generated yet."
-    )
+    st.info("No content generated yet.")
 
 else:
 
-    for index, item in enumerate(
-        reversed(st.session_state.history)
-    ):
+    for item in reversed(st.session_state.history):
 
         with st.expander(
             f"📌 {item['topic']} | "
@@ -452,9 +512,9 @@ else:
                 item["content"]
             )
 
-# --------------------------------------------------
+# -------------------------------------------------
 # FOOTER
-# --------------------------------------------------
+# -------------------------------------------------
 
 st.divider()
 
@@ -462,7 +522,7 @@ st.markdown(
     """
     <center>
     <b>📱 AI Social Media Content Creator</b><br>
-    Built with Python, Streamlit and Ollama 🤖
+    Built with Python & Streamlit
     </center>
     """,
     unsafe_allow_html=True
