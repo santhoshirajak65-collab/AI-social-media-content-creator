@@ -283,20 +283,22 @@ Return only the final social media content.
             # -------------------------------------------------
             # SUCCESS MESSAGE
             # -------------------------------------------------
-            st.success("✅ Content generated successfully!")
+            try:
 
-        except Exception as e:
+    with st.spinner("✨ Creating your content..."):
 
-            st.error(
-                "❌ Something went wrong while generating content."
-            )
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
 
-            st.info(
-                "Please check your Gemini API key and internet connection."
-            )
+    generated_content = response.text
 
-            st.write("Error details:", str(e))
+    st.markdown("### ✨ Generated Content")
+    st.write(generated_content)
 
+except Exception as e:
+    st.exception(e)
 # ---------------------------------------------------------
 # FOOTER
 # ---------------------------------------------------------
