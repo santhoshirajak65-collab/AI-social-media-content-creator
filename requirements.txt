@@ -1,6 +1,6 @@
 ollama
 streamlit>=1.40,<2
-pandas>=2.2,<3
-python-dotenv>=1.0,<2
 google-genai>=1.0,<2
 openai
+python-dotenv>=1.0,<2
+pandas>=2.2,<3
